@@ -13,6 +13,7 @@ import {NinjaHeader} from './ninja-header.js';
 import {NinjaAction} from './ninja-action.js';
 import {footerHtml} from './ninja-footer.js';
 import {baseStyles} from './base-styles.js';
+import {commandScore} from './command-score';
 
 @customElement('ninja-keys')
 export class NinjaKeys extends LitElement {
@@ -304,30 +305,29 @@ export class NinjaKeys extends LitElement {
 
   private _unregisterInternalHotkeys() {
     if (this.openHotkey) {
-      hotkeys.unbind(this.openHotkey)
+      hotkeys.unbind(this.openHotkey);
     }
 
     if (this.selectHotkey) {
-      hotkeys.unbind(this.selectHotkey)
+      hotkeys.unbind(this.selectHotkey);
     }
 
     if (this.goBackHotkey) {
-      hotkeys.unbind(this.goBackHotkey)
+      hotkeys.unbind(this.goBackHotkey);
     }
 
     if (this.navigationDownHotkey) {
-      hotkeys.unbind(this.navigationDownHotkey)
+      hotkeys.unbind(this.navigationDownHotkey);
     }
 
     if (this.navigationUpHotkey) {
-      hotkeys.unbind(this.navigationUpHotkey)
+      hotkeys.unbind(this.navigationUpHotkey);
     }
 
     if (this.closeHotkey) {
-      hotkeys.unbind(this.closeHotkey)
+      hotkeys.unbind(this.closeHotkey);
     }
   }
-
 
   private _actionFocused(index: INinjaAction, $event: MouseEvent) {
     // this.selectedIndex = index;
@@ -360,18 +360,34 @@ export class NinjaKeys extends LitElement {
       modal: true,
     };
 
-    const actionMatches = this._flatData.filter((action) => {
-      const regex = new RegExp(this._search, 'gi');
-      const matcher =
-        action.title.match(regex) || action.keywords?.match(regex);
+    const results: {score: number; item: INinjaAction}[] = [];
+    this._flatData.forEach((item) => {
+      const score = commandScore(item.title, this._search);
 
-      if (!this._currentRoot && this._search) {
-        // global search for items on root
-        return matcher;
+      // global search for items on root
+      //
+      if (
+        (this._currentRoot || !this._search) &&
+        item.parent !== this._currentRoot
+      ) {
+        return;
       }
 
-      return action.parent === this._currentRoot && matcher;
+      if (score > 0) {
+        results.push({score: score, item: item});
+      }
     });
+
+    const actionMatches = (
+      this._search
+        ? results.sort((a, b) => {
+            if (a.score === b.score) {
+              return a.item.title.localeCompare(b.item.title);
+            }
+            return b.score - a.score;
+          })
+        : results
+    ).map((suggestion) => suggestion.item);
 
     const sections = actionMatches.reduce(
       (entryMap, e) =>
@@ -388,6 +404,11 @@ export class NinjaKeys extends LitElement {
       this._selected = undefined;
     }
 
+    // We calculate this once here, and use it in each list item to highlight
+    // the matched part(s).
+    //
+    const splitSearch = this._search.toLowerCase().split('');
+
     const actionsList = (actions: INinjaAction[]) =>
       html` ${repeat(
         actions,
@@ -397,11 +418,12 @@ export class NinjaKeys extends LitElement {
             exportparts="ninja-action,ninja-selected,ninja-icon"
             .selected=${live(action.id === this._selected?.id)}
             .hotKeysJoinedView=${this.hotKeysJoinedView}
-            @mouseover=${(event: MouseEvent) =>
+            @mousemove=${(event: MouseEvent) =>
               this._actionFocused(action, event)}
             @actionsSelected=${(event: CustomEvent<INinjaAction>) =>
               this._actionSelected(event.detail)}
             .action=${action}
+            .search=${splitSearch}
           ></ninja-action>`
       )}`;
 
@@ -480,6 +502,9 @@ export class NinjaKeys extends LitElement {
   private async _handleInput(event: CustomEvent<{search: string}>) {
     this._search = event.detail.search;
     await this.updateComplete;
+    // Focus on the first item on input change
+    //
+    this._selected = this._actionMatches[0];
     this.dispatchEvent(
       new CustomEvent('change', {
         detail: {search: this._search, actions: this._actionMatches},

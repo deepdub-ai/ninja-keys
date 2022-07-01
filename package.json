@@ -1,6 +1,6 @@
 {
-  "name": "ninja-keys",
-  "version": "1.2.2",
+  "name": "@deepdub/ninja-keys",
+  "version": "1.2.3-yalc.33",
   "description": "Ninja Keys",
   "main": "dist/ninja-keys.js",
   "module": "dist/ninja-keys.js",
@@ -11,6 +11,7 @@
   },
   "scripts": {
     "start": "npm run build && concurrently -k -r  \"npm run serve\" \"npm run build:watch\"",
+    "bump-prerelease": "npm version prerelease --preid=yalc --no-git-tag-version && yalc publish && cd ../deepdubapp-dev && yalc add @deepdub/ninja-keys",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "clean": "rimraf dist/",
@@ -26,8 +27,8 @@
     "bundle": "npm run build && rollup -c --file dist/ninja-keys.bundled.js",
     "checksize": "rollup -c ; cat dist/ninja-keys.bundled.js | gzip -9 | wc -c ; rm dist/ninja-keys.bundled.js",
     "prepublish": "npm run clean && npm run build",
-    "publish": "clean-publish",
-    "publish-test": "rimraf package && clean-publish --without-publish --temp-dir package"
+    "//publish": "clean-publish",
+    "//publish-test": "rimraf package && clean-publish --without-publish --temp-dir package"
   },
   "keywords": [
     "web-components",

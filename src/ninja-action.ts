@@ -24,6 +24,10 @@ export class NinjaAction extends LitElement {
       transition: color 0s ease 0s;
       width: 100%;
     }
+    .ninja-action .highlight {
+      color: var(--ninja-accent-color);
+      font-weight: bold;
+    }
     .ninja-action.selected {
       cursor: pointer;
       color: var(--ninja-selected-text-color);
@@ -83,6 +87,9 @@ export class NinjaAction extends LitElement {
   @property({type: Object})
   action!: INinjaAction;
 
+  @property({type: [String]})
+  search!: string[];
+
   @property({type: Boolean})
   selected = false;
 
@@ -96,7 +103,7 @@ export class NinjaAction extends LitElement {
    * Scroll to show element
    */
   ensureInView() {
-    requestAnimationFrame(() => this.scrollIntoView({block: 'nearest'}));
+    this.scrollIntoView({block: 'nearest'});
   }
 
   override click() {
@@ -120,6 +127,21 @@ export class NinjaAction extends LitElement {
         this.ensureInView();
       }
     }
+  }
+
+  highlightMatch(str: string, search: string[]) {
+    let result = '';
+    let strLowerCased = str.toLowerCase();
+    for (let i = 0; i < search.length; i++) {
+      const index = strLowerCased.indexOf(search[i]);
+      result +=
+        str.substring(0, index) +
+        `<span class="highlight">${str.substr(index, 1)}</span>`;
+      str = str.substring(index + 1);
+      strLowerCased = strLowerCased.substring(index + 1);
+    }
+    result += str;
+    return unsafeHTML(result);
   }
 
   override render() {
@@ -172,7 +194,9 @@ export class NinjaAction extends LitElement {
         class=${classMap(classes)}
       >
         ${icon}
-        <div class="ninja-title">${this.action.title}</div>
+        <div class="ninja-title">
+          ${this.highlightMatch(this.action.title, this.search)}
+        </div>
         ${hotkey}
       </div>
     `;

@@ -124,12 +124,11 @@ export const baseStyles = css`
   .actions-list {
     max-height: var(--ninja-actions-height);
     overflow: auto;
-    scroll-behavior: smooth;
     position: relative;
     margin: 0;
     padding: 0.5em 0;
     list-style: none;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
 
   .group-header {
