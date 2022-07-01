@@ -1,10 +1,13 @@
 {
   "name": "@deepdub/ninja-keys",
-  "version": "1.2.3-yalc.33",
+  "version": "1.2.3",
   "description": "Ninja Keys",
   "main": "dist/ninja-keys.js",
   "module": "dist/ninja-keys.js",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": "./dist/ninja-keys.js",
     "./ninja-header": "./dist/ninja-header.js"
