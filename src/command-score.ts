@@ -58,19 +58,19 @@ const IS_GAP_REGEXP = /[\\/_+.#"@[({&]/,
   COUNT_SPACE_REGEXP = /[\s-]/g;
 
 function commandScoreInner(
-  string: any,
-  abbreviation: any,
-  lowerString: any,
-  lowerAbbreviation: any,
-  stringIndex: any,
-  abbreviationIndex: any,
-  memoizedResults: any
+  string: string,
+  abbreviation: string,
+  lowerString: string,
+  lowerAbbreviation: string,
+  stringIndex: number,
+  abbreviationIndex: number,
+  memoizedResults: {[key: string]: {score: number; indices: number[]}}
 ) {
   if (abbreviationIndex === abbreviation.length) {
     if (stringIndex === string.length) {
-      return SCORE_CONTINUE_MATCH;
+      return {score: SCORE_CONTINUE_MATCH, indices: []};
     }
-    return PENALTY_NOT_COMPLETE;
+    return {score: PENALTY_NOT_COMPLETE, indices: []};
   }
 
   const memoizeKey = `${stringIndex},${abbreviationIndex}`;
@@ -82,10 +82,11 @@ function commandScoreInner(
   let index = lowerString.indexOf(abbreviationChar, stringIndex);
   let highScore = 0;
 
-  let score, wordBreaks, spaceBreaks;
+  let score, wordBreaks, spaceBreaks, result;
+  let indices: number[] = [];
 
   while (index >= 0) {
-    score = commandScoreInner(
+    result = commandScoreInner(
       string,
       abbreviation,
       lowerString,
@@ -94,6 +95,7 @@ function commandScoreInner(
       abbreviationIndex + 1,
       memoizedResults
     );
+    score = result.score;
     if (score > highScore) {
       if (index === stringIndex) {
         score *= SCORE_CONTINUE_MATCH;
@@ -125,47 +127,24 @@ function commandScoreInner(
       }
     }
 
-    // if (
-    //   (score < SCORE_TRANSPOSITION &&
-    //     lowerString.charAt(index - 1) ===
-    //       lowerAbbreviation.charAt(abbreviationIndex + 1)) ||
-    //   (lowerAbbreviation.charAt(abbreviationIndex + 1) ===
-    //     lowerAbbreviation.charAt(abbreviationIndex) && // allow duplicate letters. Ref #7428
-    //     lowerString.charAt(index - 1) !==
-    //       lowerAbbreviation.charAt(abbreviationIndex))
-    // ) {
-    //   transposedScore = commandScoreInner(
-    //     string,
-    //     abbreviation,
-    //     lowerString,
-    //     lowerAbbreviation,
-    //     index + 1,
-    //     abbreviationIndex + 2,
-    //     memoizedResults
-    //   );
-
-    //   if (transposedScore * SCORE_TRANSPOSITION > score) {
-    //     score = transposedScore * SCORE_TRANSPOSITION;
-    //   }
-    // }
-
     if (score > highScore) {
+      indices = [index, ...result.indices];
       highScore = score;
     }
 
     index = lowerString.indexOf(abbreviationChar, index + 1);
   }
 
-  memoizedResults[memoizeKey] = highScore;
-  return highScore;
+  memoizedResults[memoizeKey] = {score: highScore, indices};
+  return {score: highScore, indices};
 }
 
-function formatInput(string: any) {
+function formatInput(string: string) {
   // convert all valid space characters to space so they match each other
   return string.toLowerCase().replace(COUNT_SPACE_REGEXP, ' ');
 }
 
-function commandScore(string: any, abbreviation: any) {
+function commandScore(string: string, abbreviation: string) {
   /* NOTE:
    * in the original, we used to do the lower-casing on each recursive call, but this meant that toLowerCase()
    * was the dominating cost in the algorithm, passing both is a little ugly, but considerably faster.
@@ -181,4 +160,6 @@ function commandScore(string: any, abbreviation: any) {
   );
 }
 
+console.log(commandScore('Toggle Entity Ids', 'ids'));
+(window as any).commandScore = commandScore;
 export {commandScore};

@@ -1,6 +1,6 @@
 {
   "name": "@deepdub/ninja-keys",
-  "version": "1.2.3",
+  "version": "1.2.5",
   "description": "Ninja Keys",
   "main": "dist/ninja-keys.js",
   "module": "dist/ninja-keys.js",
@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "npm run build && concurrently -k -r  \"npm run serve\" \"npm run build:watch\"",
-    "bump-prerelease": "npm version prerelease --preid=yalc --no-git-tag-version && yalc publish && cd ../deepdubapp-dev && yalc add @deepdub/ninja-keys",
+    "bump-prerelease": "npm version prerelease --preid=yalc --no-git-tag-version && yalc publish && cd ../deepdubapp && yalc add @deepdub/ninja-keys",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "clean": "rimraf dist/",

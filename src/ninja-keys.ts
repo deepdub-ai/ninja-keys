@@ -19,6 +19,8 @@ import {commandScore} from './command-score';
 export class NinjaKeys extends LitElement {
   static override styles = [baseStyles];
 
+  _ignorePrefixesSplit: string[] | null = null;
+
   /**
    * Search placeholder text
    */
@@ -33,6 +35,11 @@ export class NinjaKeys extends LitElement {
    * Show or hide breadcrumbs on header
    */
   @property({type: Boolean}) hideBreadcrumbs = false;
+
+  /**
+   * Show or hide breadcrumbs on header
+   */
+  @property({type: String}) ignorePrefixes = '';
 
   /**
    * Open or hide shorcut
@@ -89,6 +96,16 @@ export class NinjaKeys extends LitElement {
     },
   })
   data = [] as Array<INinjaAction>;
+
+  @property({
+    type: String,
+    hasChanged() {
+      // See command above `data`.
+      //
+      return true;
+    },
+  })
+  search = '';
 
   /**
    * Public methods
@@ -218,6 +235,10 @@ export class NinjaKeys extends LitElement {
   }
 
   override update(changedProperties: PropertyValues<this>) {
+    if (changedProperties.has('search')) {
+      this._headerRef.value?.setSearch(this.search);
+    }
+
     if (changedProperties.has('data') && !this.disableHotkeys) {
       this._flatData = this._flattern(this.data);
 
@@ -360,26 +381,43 @@ export class NinjaKeys extends LitElement {
       modal: true,
     };
 
+    let searchNoPrefix = this._search;
+
+    this._ignorePrefixesSplit ??=
+      this.ignorePrefixes !== '' ? this.ignorePrefixes.split(',') : [];
+
+    this._ignorePrefixesSplit?.some((prefix: string) => {
+      if (searchNoPrefix.startsWith(prefix)) {
+        searchNoPrefix = searchNoPrefix.substring(prefix.length);
+        return true;
+      }
+
+      return false;
+    });
+    searchNoPrefix = searchNoPrefix.trim();
+
+    const matchInidices: {[label: string]: number[]} = {};
     const results: {score: number; item: INinjaAction}[] = [];
     this._flatData.forEach((item) => {
-      const score = commandScore(item.title, this._search);
+      const result = commandScore(item.title, searchNoPrefix);
 
       // global search for items on root
       //
       if (
-        (this._currentRoot || !this._search) &&
+        (this._currentRoot || !searchNoPrefix) &&
         item.parent !== this._currentRoot
       ) {
         return;
       }
 
-      if (score > 0) {
-        results.push({score: score, item: item});
+      matchInidices[item.title] = result.indices;
+      if (result.score > 0) {
+        results.push({score: result.score, item: item});
       }
     });
 
     const actionMatches = (
-      this._search
+      searchNoPrefix
         ? results.sort((a, b) => {
             if (a.score === b.score) {
               return a.item.title.localeCompare(b.item.title);
@@ -404,11 +442,6 @@ export class NinjaKeys extends LitElement {
       this._selected = undefined;
     }
 
-    // We calculate this once here, and use it in each list item to highlight
-    // the matched part(s).
-    //
-    const splitSearch = this._search.toLowerCase().split('');
-
     const actionsList = (actions: INinjaAction[]) =>
       html` ${repeat(
         actions,
@@ -423,7 +456,7 @@ export class NinjaKeys extends LitElement {
             @actionsSelected=${(event: CustomEvent<INinjaAction>) =>
               this._actionSelected(event.detail)}
             .action=${action}
-            .search=${splitSearch}
+            .matchIndices=${matchInidices[action.title]}
           ></ninja-action>`
       )}`;
 

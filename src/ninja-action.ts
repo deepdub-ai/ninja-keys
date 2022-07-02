@@ -86,8 +86,8 @@ export class NinjaAction extends LitElement {
   @property({type: Object})
   action!: INinjaAction;
 
-  @property({type: [String]})
-  search!: string[];
+  @property({type: Array})
+  matchIndices!: number[];
 
   @property({type: Boolean})
   selected = false;
@@ -128,18 +128,17 @@ export class NinjaAction extends LitElement {
     }
   }
 
-  highlightMatch(str: string, search: string[]) {
+  highlightMatch(str: string, indices: number[]) {
     let result = '';
-    let strLowerCased = str.toLowerCase();
-    for (let i = 0; i < search.length; i++) {
-      const index = strLowerCased.indexOf(search[i]);
-      result +=
-        str.substring(0, index) +
-        `<span class="highlight">${str.substr(index, 1)}</span>`;
-      str = str.substring(index + 1);
-      strLowerCased = strLowerCased.substring(index + 1);
+    let j = 0;
+    for (let i = 0; i < str.length; i++) {
+      if (indices[j] === i) {
+        result += `<span class="highlight">${str[i]}</span>`;
+        j++;
+      } else {
+        result += str[i];
+      }
     }
-    result += str;
     return unsafeHTML(result);
   }
 
@@ -194,7 +193,7 @@ export class NinjaAction extends LitElement {
       >
         ${icon}
         <div class="ninja-title">
-          ${this.highlightMatch(this.action.title, this.search)}
+          ${this.highlightMatch(this.action.title, this.matchIndices)}
         </div>
         ${hotkey}
       </div>

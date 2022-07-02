@@ -106,7 +106,7 @@ export class NinjaHeader extends LitElement {
           id="search"
           spellcheck="false"
           autocomplete="off"
-          @input="${this._handleInput}"
+          @keyup="${this._handleInput}"
           ${ref(this._inputRef)}
           placeholder="${this.placeholder}"
           class="search"
