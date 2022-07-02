@@ -52,7 +52,6 @@ export class NinjaAction extends LitElement {
       flex-shrink: 0.01;
       margin-right: 0.5em;
       flex-grow: 1;
-      font-size: 0.8125em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

@@ -19,7 +19,7 @@ export class NinjaHeader extends LitElement {
       font-size: 1.125em;
       background: transparent;
       caret-color: var(--ninja-accent-color);
-      color: var(--ninja-text-color);
+      color: #ffffff;
       outline: none;
       font-family: var(--ninja-font-family);
     }
@@ -52,6 +52,7 @@ export class NinjaHeader extends LitElement {
     .search-wrapper {
       display: flex;
       border-bottom: var(--ninja-separate-border);
+      background: #000000;
     }
   `;
 

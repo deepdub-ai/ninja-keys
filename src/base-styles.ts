@@ -92,11 +92,16 @@ export const baseStyles = css`
     flex-grow: 1;
     min-width: 0px;
     will-change: transform;
-    background: var(--ninja-modal-background);
+    background: #00000080;
+    backdrop-filter: blur(20px);
     border-radius: 0.5em;
     box-shadow: var(--ninja-modal-shadow);
     max-width: var(--ninja-width);
     overflow: hidden;
+  }
+
+  .modal-body {
+    background: #000000;
   }
 
   .bump {
@@ -146,7 +151,6 @@ export const baseStyles = css`
   }
 
   .modal-footer {
-    background: var(--ninja-footer-background);
     padding: 0.5em 1em;
     display: flex;
     /* font-size: 0.75em; */
