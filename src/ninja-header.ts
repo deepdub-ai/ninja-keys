@@ -125,7 +125,11 @@ export class NinjaHeader extends LitElement {
     requestAnimationFrame(() => this._inputRef.value!.focus());
   }
 
-  private _handleInput(event: Event) {
+  private _handleInput(event: KeyboardEvent) {
+    if (event.key.startsWith('Arrow')) {
+      return;
+    }
+
     const input = event.target as HTMLInputElement;
     this.dispatchEvent(
       new CustomEvent('change', {

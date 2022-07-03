@@ -122,6 +122,11 @@ export class NinjaKeys extends LitElement {
       this._selected = this._actionMatches[0];
     }
     this.setParent(options.parent);
+    setTimeout(() => {
+      this._wrapperRef.value
+        ?.querySelector<HTMLDivElement>('.actions-list')
+        ?.scrollTo({top: 0});
+    }, 0);
   }
 
   /**
@@ -369,6 +374,7 @@ export class NinjaKeys extends LitElement {
   }
 
   private _headerRef = createRef<NinjaHeader>();
+  private _wrapperRef = createRef<HTMLDivElement>();
 
   override render() {
     const classes = {
@@ -469,7 +475,11 @@ export class NinjaKeys extends LitElement {
     });
 
     return html`
-      <div @click=${this._overlayClick} class=${classMap(menuClasses)}>
+      <div
+        @click=${this._overlayClick}
+        class=${classMap(menuClasses)}
+        ${ref(this._wrapperRef)}
+      >
         <div class=${classMap(classes)} @animationend=${this._onTransitionEnd}>
           <ninja-header
             exportparts="ninja-input,ninja-input-wrapper"

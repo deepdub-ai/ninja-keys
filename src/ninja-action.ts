@@ -39,13 +39,15 @@ export class NinjaAction extends LitElement {
       color: var(--ninja-selected-text-color);
     }
     .ninja-icon {
+      width: 20px;
       font-size: var(--ninja-icon-size);
-      max-width: var(--ninja-icon-size);
-      max-height: var(--ninja-icon-size);
-      margin-right: 1em;
       color: var(--ninja-icon-color);
-      margin-right: 1em;
+      margin-right: 0.5625rem;
       position: relative;
+      line-height: 0;
+    }
+    .ninja-icon img {
+      width: 100%;
     }
 
     .ninja-title {
@@ -149,7 +151,9 @@ export class NinjaAction extends LitElement {
         >${this.action.mdIcon}</mwc-icon
       >`;
     } else if (this.action.icon) {
-      icon = unsafeHTML(this.action.icon || '');
+      icon = this.action.icon
+        ? unsafeHTML(`<div class="ninja-icon">${this.action.icon}</div>`)
+        : '';
     }
 
     // const hotkey = this.action.hotkey
