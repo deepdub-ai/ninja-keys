@@ -7,6 +7,6 @@ export interface INinjaAction {
   icon?: string;
   parent?: string;
   keywords?: string;
-  children?: string[];
+  children?: (INinjaAction | (() => Promise<INinjaAction[]>) | 'loading')[];
   section?: string;
 }

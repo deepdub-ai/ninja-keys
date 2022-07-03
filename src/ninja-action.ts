@@ -45,6 +45,7 @@ export class NinjaAction extends LitElement {
       margin-right: 0.5625rem;
       position: relative;
       line-height: 0;
+      flex-shrink: 0;
     }
     .ninja-icon img {
       width: 100%;
@@ -147,13 +148,9 @@ export class NinjaAction extends LitElement {
   override render() {
     let icon;
     if (this.action.mdIcon) {
-      icon = html`<mwc-icon part="ninja-icon" class="ninja-icon"
-        >${this.action.mdIcon}</mwc-icon
-      >`;
+      icon = html`<mwc-icon part="ninja-icon" class="ninja-icon">${this.action.mdIcon}</mwc-icon>`;
     } else if (this.action.icon) {
-      icon = this.action.icon
-        ? unsafeHTML(`<div class="ninja-icon">${this.action.icon}</div>`)
-        : '';
+      icon = this.action.icon ? unsafeHTML(`<div class="ninja-icon">${this.action.icon}</div>`) : '';
     }
 
     // const hotkey = this.action.hotkey
@@ -169,16 +166,12 @@ export class NinjaAction extends LitElement {
             '+'
           )}`;
 
-          return html`<div class="ninja-hotkey ninja-hotkeys">
-            ${joinedKeys}
-          </div>`;
+          return html`<div class="ninja-hotkey ninja-hotkeys">${joinedKeys}</div>`;
         });
       } else {
         hotkey = this.action.hotkey.split(',').map((hotkeys) => {
           const keys = hotkeys.split('+');
-          const keyElements = keys.map(
-            (key) => html`<kbd class="ninja-hotkey">${key}</kbd>`
-          );
+          const keyElements = keys.map((key) => html`<kbd class="ninja-hotkey">${key}</kbd>`);
           return html`<kbd class="ninja-hotkeys">${keyElements}</kbd>`;
         });
       }
@@ -190,15 +183,9 @@ export class NinjaAction extends LitElement {
     };
 
     return html`
-      <div
-        class="ninja-action"
-        part="ninja-action ${this.selected ? 'ninja-selected' : ''}"
-        class=${classMap(classes)}
-      >
+      <div class="ninja-action" part="ninja-action ${this.selected ? 'ninja-selected' : ''}" class=${classMap(classes)}>
         ${icon}
-        <div class="ninja-title">
-          ${this.highlightMatch(this.action.title, this.matchIndices)}
-        </div>
+        <div class="ninja-title">${this.highlightMatch(this.action.title, this.matchIndices)}</div>
         ${hotkey}
       </div>
     `;

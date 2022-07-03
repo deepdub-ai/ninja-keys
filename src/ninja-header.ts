@@ -69,6 +69,7 @@ export class NinjaHeader extends LitElement {
   breadcrumbs: string[] = [];
 
   private _inputRef = createRef<HTMLInputElement>();
+  private _prevValue = '';
 
   override render() {
     let breadcrumbs: TemplateResult<1> | '' = '';
@@ -76,23 +77,13 @@ export class NinjaHeader extends LitElement {
       const itemTemplates = [];
       for (const breadcrumb of this.breadcrumbs) {
         itemTemplates.push(
-          html`<button
-            tabindex="-1"
-            @click=${() => this.selectParent(breadcrumb)}
-            class="breadcrumb"
-          >
+          html`<button tabindex="-1" @click=${() => this.selectParent(breadcrumb)} class="breadcrumb">
             ${breadcrumb}
           </button>`
         );
       }
       breadcrumbs = html`<div class="breadcrumb-list">
-        <button
-          tabindex="-1"
-          @click=${() => this.selectParent()}
-          class="breadcrumb"
-        >
-          ${this.breadcrumbHome}
-        </button>
+        <button tabindex="-1" @click=${() => this.selectParent()} class="breadcrumb">${this.breadcrumbHome}</button>
         ${itemTemplates}
       </div>`;
     }
@@ -106,7 +97,8 @@ export class NinjaHeader extends LitElement {
           id="search"
           spellcheck="false"
           autocomplete="off"
-          @keyup="${this._handleInput}"
+          @input="${this._handleInput}"
+          @keyup="${this._handleKeyup}"
           ${ref(this._inputRef)}
           placeholder="${this.placeholder}"
           class="search"
@@ -117,6 +109,7 @@ export class NinjaHeader extends LitElement {
 
   setSearch(value: string) {
     if (this._inputRef.value) {
+      this._prevValue = value;
       this._inputRef.value.value = value;
     }
   }
@@ -126,14 +119,25 @@ export class NinjaHeader extends LitElement {
   }
 
   private _handleInput(event: KeyboardEvent) {
-    if (event.key.startsWith('Arrow')) {
+    const input = event.target as HTMLInputElement;
+    this.handleChange(input.value);
+  }
+
+  private _handleKeyup(event: KeyboardEvent) {
+    const input = event.target as HTMLInputElement;
+    if (input.value === this._prevValue) {
       return;
     }
 
-    const input = event.target as HTMLInputElement;
+    this.handleChange(input.value);
+  }
+
+  private handleChange(value: string) {
+    this._prevValue = value;
+
     this.dispatchEvent(
       new CustomEvent('change', {
-        detail: {search: input.value},
+        detail: {search: value},
         bubbles: false,
         composed: false,
       })
@@ -155,9 +159,7 @@ export class NinjaHeader extends LitElement {
   }
 
   _close() {
-    this.dispatchEvent(
-      new CustomEvent('close', {bubbles: true, composed: true})
-    );
+    this.dispatchEvent(new CustomEvent('close', {bubbles: true, composed: true}));
   }
 }
 

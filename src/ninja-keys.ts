@@ -1,4 +1,4 @@
-import {LitElement, html, TemplateResult, PropertyValues} from 'lit';
+import {LitElement, html, TemplateResult} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {repeat} from 'lit/directives/repeat.js';
 import {live} from 'lit/directives/live.js';
@@ -83,6 +83,8 @@ export class NinjaKeys extends LitElement {
    */
   @property({type: Boolean}) noAutoLoadMdIcons = false;
 
+  @property({type: Number}) numRecentActions = 0;
+
   /**
    * Array of actions
    */
@@ -97,16 +99,6 @@ export class NinjaKeys extends LitElement {
   })
   data = [] as Array<INinjaAction>;
 
-  @property({
-    type: String,
-    hasChanged() {
-      // See command above `data`.
-      //
-      return true;
-    },
-  })
-  search = '';
-
   /**
    * Public methods
    */
@@ -114,7 +106,7 @@ export class NinjaKeys extends LitElement {
   /**
    * Show a modal
    */
-  open(options: {parent?: string} = {}) {
+  open(options: {parent?: string; search?: string} = {}) {
     this._bump = true;
     this.visible = true;
     this._headerRef.value!.focusSearch();
@@ -122,10 +114,10 @@ export class NinjaKeys extends LitElement {
       this._selected = this._actionMatches[0];
     }
     this.setParent(options.parent);
+    this._headerRef.value?.setSearch(options.search ?? '');
+    this._search = options.search ?? '';
     setTimeout(() => {
-      this._wrapperRef.value
-        ?.querySelector<HTMLDivElement>('.actions-list')
-        ?.scrollTo({top: 0});
+      this._wrapperRef.value?.querySelector<HTMLDivElement>('.actions-list')?.scrollTo({top: 0});
     }, 0);
   }
 
@@ -172,11 +164,6 @@ export class NinjaKeys extends LitElement {
   @state()
   private _currentRoot?: string;
 
-  /**
-   * Array of actions in flat structure
-   */
-  @state() _flatData = [] as Array<INinjaAction>;
-
   @state()
   private get breadcrumbs() {
     const path: string[] = [];
@@ -184,7 +171,8 @@ export class NinjaKeys extends LitElement {
     if (parentAction) {
       path.push(parentAction);
       while (parentAction) {
-        const action = this._flatData.find((a) => a.id === parentAction);
+        // const action = this._flatData.find((a) => a.id === parentAction);
+        const action = ([] as INinjaAction[]).find((a) => a.id === parentAction);
         if (action?.parent) {
           path.push(action.parent);
         }
@@ -210,55 +198,6 @@ export class NinjaKeys extends LitElement {
   override disconnectedCallback() {
     super.disconnectedCallback();
     this._unregisterInternalHotkeys();
-  }
-
-  private _flattern(members: INinjaAction[], parent?: string): INinjaAction[] {
-    let children = [] as Array<any>;
-    if (!members) {
-      members = [];
-    }
-    return members
-      .map((mem) => {
-        const alreadyFlatternByUser =
-          mem.children &&
-          mem.children.some((value: any) => {
-            return typeof value == 'string';
-          });
-        const m = {...mem, parent: mem.parent || parent};
-        if (alreadyFlatternByUser) {
-          return m;
-        } else {
-          if (m.children && m.children.length) {
-            parent = mem.id;
-            children = [...children, ...m.children];
-          }
-          m.children = m.children ? m.children.map((c: any) => c.id) : [];
-          return m;
-        }
-      })
-      .concat(children.length ? this._flattern(children, parent) : children);
-  }
-
-  override update(changedProperties: PropertyValues<this>) {
-    if (changedProperties.has('search')) {
-      this._headerRef.value?.setSearch(this.search);
-    }
-
-    if (changedProperties.has('data') && !this.disableHotkeys) {
-      this._flatData = this._flattern(this.data);
-
-      this._flatData
-        .filter((action) => !!action.hotkey)
-        .forEach((action) => {
-          hotkeys(action.hotkey!, (event) => {
-            event.preventDefault();
-            if (action.handler) {
-              action.handler(action);
-            }
-          });
-        });
-    }
-    super.update(changedProperties);
   }
 
   private _registerInternalHotkeys() {
@@ -366,10 +305,7 @@ export class NinjaKeys extends LitElement {
   }
 
   private _goBack() {
-    const parent =
-      this.breadcrumbs.length > 1
-        ? this.breadcrumbs[this.breadcrumbs.length - 2]
-        : undefined;
+    const parent = this.breadcrumbs.length > 1 ? this.breadcrumbs[this.breadcrumbs.length - 2] : undefined;
     this.setParent(parent);
   }
 
@@ -385,12 +321,12 @@ export class NinjaKeys extends LitElement {
     const menuClasses = {
       visible: this.visible,
       modal: true,
+      isLoadingItems: false,
     };
 
     let searchNoPrefix = this._search;
 
-    this._ignorePrefixesSplit ??=
-      this.ignorePrefixes !== '' ? this.ignorePrefixes.split(',') : [];
+    this._ignorePrefixesSplit ??= this.ignorePrefixes !== '' ? this.ignorePrefixes.split(',') : [];
 
     this._ignorePrefixesSplit?.some((prefix: string) => {
       if (searchNoPrefix.startsWith(prefix)) {
@@ -404,15 +340,34 @@ export class NinjaKeys extends LitElement {
 
     const matchInidices: {[label: string]: number[]} = {};
     const results: {score: number; item: INinjaAction}[] = [];
-    this._flatData.forEach((item) => {
+    const items = this._currentRoot
+      ? this.data.find((item) => item.id === this._currentRoot)?.children ?? []
+      : this.data;
+
+    items.forEach((item, index) => {
+      if (item === 'loading') {
+        menuClasses.isLoadingItems = true;
+        return;
+      }
+
+      if (typeof item === 'function') {
+        const parent = this.data.find((item) => item.id === this._currentRoot)!;
+        parent.children?.splice(index, 1, 'loading');
+
+        menuClasses.isLoadingItems = true;
+
+        item().then((result: INinjaAction[]) => {
+          parent.children?.splice(index, 1, ...result);
+          this.render();
+        });
+        return;
+      }
+
       const result = commandScore(item.title, searchNoPrefix);
 
       // global search for items on root
       //
-      if (
-        (this._currentRoot || !searchNoPrefix) &&
-        item.parent !== this._currentRoot
-      ) {
+      if ((this._currentRoot || !searchNoPrefix) && item.parent !== this._currentRoot) {
         return;
       }
 
@@ -434,8 +389,7 @@ export class NinjaKeys extends LitElement {
     ).map((suggestion) => suggestion.item);
 
     const sections = actionMatches.reduce(
-      (entryMap, e) =>
-        entryMap.set(e.section, [...(entryMap.get(e.section) || []), e]),
+      (entryMap, e) => entryMap.set(e.section, [...(entryMap.get(e.section) || []), e]),
       new Map()
     );
 
@@ -448,38 +402,41 @@ export class NinjaKeys extends LitElement {
       this._selected = undefined;
     }
 
+    const isShowTitle = !this._currentRoot && this.numRecentActions !== 0;
+
     const actionsList = (actions: INinjaAction[]) =>
       html` ${repeat(
         actions,
         (action) => action.id,
-        (action) =>
-          html`<ninja-action
-            exportparts="ninja-action,ninja-selected,ninja-icon"
-            .selected=${live(action.id === this._selected?.id)}
-            .hotKeysJoinedView=${this.hotKeysJoinedView}
-            @mousemove=${(event: MouseEvent) =>
-              this._actionFocused(action, event)}
-            @actionsSelected=${(event: CustomEvent<INinjaAction>) =>
-              this._actionSelected(event.detail)}
-            .action=${action}
-            .matchIndices=${matchInidices[action.title]}
-          ></ninja-action>`
+        (action, index) => {
+          const title = !isShowTitle
+            ? ''
+            : index === 0
+            ? html`<div class="title">Recently Used</div>`
+            : this.numRecentActions === index
+            ? html`<div class="title separator">Other Commands</div>`
+            : '';
+
+          return html`${title}<ninja-action
+              exportparts="ninja-action,ninja-selected,ninja-icon"
+              .selected=${live(action.id === this._selected?.id)}
+              .hotKeysJoinedView=${this.hotKeysJoinedView}
+              @mousemove=${(event: MouseEvent) => this._actionFocused(action, event)}
+              @actionsSelected=${(event: CustomEvent<INinjaAction>) => this._actionSelected(event.detail)}
+              .action=${action}
+              .matchIndices=${matchInidices[action.title]}
+            ></ninja-action>`;
+        }
       )}`;
 
     const itemTemplates: TemplateResult[] = [];
     sections.forEach((actions, section) => {
-      const header = section
-        ? html`<div class="group-header">${section}</div>`
-        : undefined;
+      const header = section ? html`<div class="group-header">${section}</div>` : undefined;
       itemTemplates.push(html`${header}${actionsList(actions)}`);
     });
 
     return html`
-      <div
-        @click=${this._overlayClick}
-        class=${classMap(menuClasses)}
-        ${ref(this._wrapperRef)}
-      >
+      <div @click=${this._overlayClick} class=${classMap(menuClasses)} ${ref(this._wrapperRef)}>
         <div class=${classMap(classes)} @animationend=${this._onTransitionEnd}>
           <ninja-header
             exportparts="ninja-input,ninja-input-wrapper"
@@ -488,12 +445,15 @@ export class NinjaKeys extends LitElement {
             .hideBreadcrumbs=${this.hideBreadcrumbs}
             .breadcrumbs=${this.breadcrumbs}
             @change=${this._handleInput}
-            @setParent=${(event: CustomEvent<INinjaAction>) =>
-              this.setParent(event.detail.parent)}
+            @setParent=${(event: CustomEvent<INinjaAction>) => this.setParent(event.detail.parent)}
             @close=${this.close}
           >
           </ninja-header>
           <div class="modal-body">
+            <div class="loading-indicator">
+              <span class="bar1"></span>
+              <span class="bar2"></span>
+            </div>
             <div class="actions-list" part="actions-list">${itemTemplates}</div>
           </div>
           <slot name="footer"> ${footerHtml} </slot>

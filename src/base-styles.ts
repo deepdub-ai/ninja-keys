@@ -80,6 +80,10 @@ export const baseStyles = css`
     display: block;
   }
 
+  .modal.isLoadingItems .loading-indicator {
+    opacity: 1;
+  }
+
   .modal-content {
     position: relative;
     top: var(--ninja-top);
@@ -104,6 +108,84 @@ export const baseStyles = css`
     background: #000000;
   }
 
+  .loading-indicator {
+    position: absolute;
+    width: 100%;
+    overflow: hidden;
+    opacity: 0;
+    height: 3px;
+    z-index: 1;
+    bottom: 34px;
+  }
+
+  .loading-indicator::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--ninja-accent-color);
+    opacity: 0.3;
+  }
+
+  @keyframes animation-bar1 {
+    0% {
+      left: -35%;
+      right: 100%;
+    }
+    60% {
+      left: 100%;
+      right: -90%;
+    }
+    100% {
+      left: 100%;
+      right: -90%;
+    }
+  }
+
+  .loading-indicator .bar1 {
+    width: 100%;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    top: 0;
+    -webkit-transition: -webkit-transform 0.2s linear;
+    transition: transform 0.2s linear;
+    transform-origin: left;
+    background-color: var(--ninja-accent-color);
+    width: auto;
+    -webkit-animation: animation-bar1 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+    animation: animation-bar1 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+  }
+
+  @keyframes animation-bar2 {
+    0% {
+      left: -200%;
+      right: 100%;
+    }
+    60% {
+      left: 107%;
+      right: -8%;
+    }
+    100% {
+      left: 107%;
+      right: -8%;
+    }
+  }
+
+  .loading-indicator .bar2 {
+    width: 100%;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    top: 0;
+    -webkit-transition: -webkit-transform 0.2s linear;
+    transition: transform 0.2s linear;
+    transform-origin: left;
+    background-color: var(--ninja-accent-color);
+    width: auto;
+    -webkit-animation: animation-bar2 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) 1.15s infinite;
+    animation: animation-bar2 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) 1.15s infinite;
+  }
+
   .bump {
     animation: zoom-in-zoom-out 0.2s ease;
   }
@@ -118,6 +200,19 @@ export const baseStyles = css`
     100% {
       transform: scale(1, 1);
     }
+  }
+
+  .title {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.25rem;
+    text-align: right;
+    position: absolute;
+    right: 0px;
+    width: 100%;
+  }
+
+  .title.separator {
+    border-top: 1px solid rgb(51, 51, 51);
   }
 
   .ninja-github {
