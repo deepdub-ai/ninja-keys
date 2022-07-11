@@ -160,6 +160,4 @@ function commandScore(string: string, abbreviation: string) {
   );
 }
 
-console.log(commandScore('Toggle Entity Ids', 'ids'));
-(window as any).commandScore = commandScore;
-export {commandScore};
+export { commandScore };
