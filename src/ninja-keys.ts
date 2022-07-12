@@ -402,7 +402,7 @@ export class NinjaKeys extends LitElement {
       this._selected = undefined;
     }
 
-    const isShowTitle = !this._currentRoot && this.numRecentActions !== 0;
+    const isShowTitle = !this._currentRoot && this.numRecentActions !== 0 && !searchNoPrefix;
 
     const actionsList = (actions: INinjaAction[]) =>
       html` ${repeat(
