@@ -17,6 +17,7 @@ export class NinjaAction extends LitElement {
     .ninja-action {
       padding: 0.75em 1em;
       display: flex;
+      gap: 0.75rem;
       border-left: 2px solid transparent;
       align-items: center;
       justify-content: start;
@@ -59,6 +60,15 @@ export class NinjaAction extends LitElement {
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    .ninja-action-type {
+      font-size: 11px;
+      padding: 3px 5px;
+      border-radius: 3px;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+
     .ninja-hotkeys {
       flex-shrink: 0;
       width: min-content;
@@ -182,9 +192,28 @@ export class NinjaAction extends LitElement {
       'ninja-action': true,
     };
 
+    function getActionColor(type: string) {
+      if (type === 'debug') {
+        return '#034900';
+      }
+      if (type === 'general') {
+        return '#193C79';
+      }
+      if (type === 'segments') {
+        return '#2F0A7D';
+      }
+
+      return '#000000';
+    }
+
     return html`
       <div class="ninja-action" part="ninja-action ${this.selected ? 'ninja-selected' : ''}" class=${classMap(classes)}>
         ${icon}
+        ${this.action.type
+          ? html`<div class="ninja-action-type" style="background: ${getActionColor(this.action.type)}">
+              ${this.action.type}
+            </div>`
+          : html``}
         <div class="ninja-title">${this.highlightMatch(this.action.title, this.matchIndices)}</div>
         ${hotkey}
       </div>
